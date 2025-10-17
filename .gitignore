@@ -1,0 +1,5 @@
+venv/
+enonce.pdf
+extracted_data/
+transformed_data
+raw_data
