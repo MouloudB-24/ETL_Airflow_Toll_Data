@@ -3,4 +3,5 @@ Ce programme implémente une processus ETL pour récupérer, transformer et stoc
 
 # ETL Process in Airflow Platform
 ![DAG](/home/mouloud/Documents/projects/Airflow/toll_data_pipeline/DAG\ ETL.png)
-![ETL Process](/home/mouloud/Documents/projects/Airflow/toll_data_pipeline/ UI_Airflow_ETL_Toll_Data.png )
+
+![ETL Process](/home/mouloud/Documents/projects/Airflow/toll_data_pipeline/ UI_Airflow_ETL_Toll_Data.png)
