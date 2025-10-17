@@ -3,9 +3,9 @@ from pathlib import Path
 import pandas as pd
 from airflow import DAG
 from datetime import datetime, timedelta
-import urllib.request
 import tarfile
 import csv
+import requests
 
 # Define the variables
 BASE_DIR = Path.cwd()
@@ -36,8 +36,13 @@ folder_transfomed_data.mkdir(exist_ok=True)
 
 
 def download_dataset(url=URL):
-    urllib.request.urlretrieve(url, input_file)
-    print("File download successefuly")
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(input_file, "wb") as f:
+            f.write(response.raw.read())
+        print("File download successefuly")
+    else:
+        print("Failed download the file")
 
 
 def untar_dataset():
@@ -49,8 +54,7 @@ def untar_dataset():
 
 def extract_data_from_csv():
     with open(f"{folder_raw_data}/vehicle-data.csv", "r") as infile, open(
-        f"{folder_extracted_data}/csv_data.csv", "w"
-    ) as outfile:
+        f"{folder_extracted_data}/csv_data.csv", "w") as outfile:
         reader = csv.reader(infile)
         writer = csv.writer(outfile)
 
@@ -68,8 +72,7 @@ def extract_data_from_csv():
 
 def extract_data_from_tsv():
     with open(f"{folder_raw_data}/tollplaza-data.tsv", "r") as infile, open(
-        f"{folder_extracted_data}/tsv_data.csv", "w"
-    ) as outfile:
+        f"{folder_extracted_data}/tsv_data.csv", "w") as outfile:
         reader = csv.reader(infile, delimiter="\t")
         writer = csv.writer(outfile)
 
@@ -84,8 +87,7 @@ def extract_data_from_tsv():
 
 def extract_data_from_fixed_widthto():
     with open(f"{folder_raw_data}/payment-data.txt", "r") as infile, open(
-        f"{folder_extracted_data}/fixed_width_data.csv", "w"
-    ) as outfile:
+        f"{folder_extracted_data}/fixed_width_data.csv", "w") as outfile:
 
         writer = csv.writer(outfile)
 
@@ -131,29 +133,19 @@ dag = DAG(
 )
 
 # Define tasks
-execute_download_dataset = PythonOperator(
-    task_id="download_dataset", python_callable=download_dataset, dag=dag
-)
-execute_untar_dataset = PythonOperator(
-    task_id="undar_dataset", python_callable=untar_dataset, dag=dag
-)
-execute_extract_data_from_csv = PythonOperator(
-    task_id="extract_data_from_csv", python_callable=extract_data_from_csv, dag=dag
-)
-execute_extract_data_from_tsv = PythonOperator(
-    task_id="extract_data_from_tsv", python_callable=extract_data_from_tsv, dag=dag
-)
-execute_extract_data_from_fixed_width = PythonOperator(
-    task_id="extract_data_from_txt",
-    python_callable=extract_data_from_fixed_widthto,
-    dag=dag,
-)
-execute_consolidate_data = PythonOperator(
-    task_id="consolidate_data", python_callable=consolidate_data, dag=dag
-)
-execute_transform_data = PythonOperator(
-    task_id="transform_data", python_callable=transform_data, dag=dag
-)
+download_task = PythonOperator(task_id="download_dataset", python_callable=download_dataset, dag=dag)
+
+untar_task = PythonOperator(task_id="undar_dataset", python_callable=untar_dataset, dag=dag)
+
+extract_csv_task = PythonOperator(task_id="extract_data_from_csv", python_callable=extract_data_from_csv, dag=dag)
+
+extract_tsv_task = PythonOperator(task_id="extract_data_from_tsv", python_callable=extract_data_from_tsv, dag=dag)
+
+extract_txt_task = PythonOperator(task_id="extract_data_from_txt", python_callable=extract_data_from_fixed_widthto, dag=dag)
+
+consolidate_task = PythonOperator(task_id="consolidate_data", python_callable=consolidate_data, dag=dag)
+
+transform_task = PythonOperator(task_id="transform_data", python_callable=transform_data, dag=dag)
 
 # Define Pipeline
-execute_download_dataset >> execute_untar_dataset >> execute_extract_data_from_csv >> execute_extract_data_from_tsv >> execute_extract_data_from_fixed_width >> execute_consolidate_data >> execute_transform_data
+download_task >> untar_task >> [extract_csv_task, extract_tsv_task, extract_txt_task] >> consolidate_task >> transform_task
