@@ -1,5 +1,5 @@
 # Extract, Transform and Load (ETL) Toll Data
-Ce programme implémente une processus ETL pour récupérer, transformer et stocker les données des stations de péages
+Ce projet implémente un pipeline ETL automatisé permettant l'extraction, la transformation et le chargement des données issues de stations de péage afin de facilité leur analyse et leur exploitation.
 
 # ETL Process in Airflow Platform
 ![DAG](images/DAG_ETL.png)
